@@ -1,0 +1,560 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Logic Vault Infinity</title>
+  <style>
+    :root { --p: #0f172a; --c: #1e293b; --acc: #f59e0b; --t: #f8fafc; --gr: #10b981; --rd: #ef4444; }
+    .theme-dark { }
+    .theme-ocean { --p: #0c4a6e; --c: #075985; --acc: #38bdf8; --t: #f8fafc; --gr: #10b981; --rd: #ef4444; }
+    .theme-light { --p: #f1f5f9; --c: #ffffff; --acc: #2563eb; --t: #0f172a; --gr: #10b981; --rd: #ef4444; }
+
+    body {
+      font-family: "Segoe UI", sans-serif;
+      background: var(--p);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--t);
+      transition: background 0.3s, color 0.3s;
+    }
+
+    #app-card {
+      background: var(--c);
+      width: 92%;
+      max-width: 520px;
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0 25px 50px rgba(0,0,0,0.35);
+      text-align: center;
+      border: 1px solid rgba(255,255,255,0.06);
+      position: relative;
+    }
+
+    .screen { display: none; flex-direction: column; gap: 14px; align-items: stretch; }
+    .active { display: flex; }
+
+    .btn {
+      padding: 12px 14px;
+      border: none;
+      border-radius: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, opacity 0.12s;
+      font-size: 1rem;
+    }
+    .btn:active { transform: scale(0.99); }
+    .btn-acc { background: var(--acc); color: white; }
+    .opt {
+      padding: 12px;
+      border: 1px solid rgba(71,85,105,0.6);
+      border-radius: 10px;
+      background: rgba(0,0,0,0.14);
+      color: var(--t);
+      text-align: left;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .opt[disabled] { opacity: 0.6; cursor: not-allowed; }
+    #exp-box {
+      display: none;
+      background: rgba(16,185,129,0.08);
+      padding: 10px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      border: 1px solid var(--gr);
+      color: var(--gr);
+    }
+    .correct { background: var(--gr) !important; color: white !important; border-color: rgba(0,0,0,0.2) !important; }
+    .wrong { background: var(--rd) !important; color: white !important; border-color: rgba(0,0,0,0.2) !important; }
+
+    #opt-box { display: grid; gap:8px; }
+    .row-between { display:flex; justify-content:space-between; align-items:center; }
+    input, select { padding:10px; border-radius:10px; border:1px solid rgba(255,255,255,0.06); background:var(--p); color:var(--t); width:100%; box-sizing:border-box; }
+    .small { font-size:0.9rem; }
+    footer { opacity:0.8; font-size:0.85rem; margin-top:6px; }
+
+    /* Timer UI */
+    #timer-wrap { display:flex; gap:10px; align-items:center; justify-content:space-between; margin-top:6px; }
+    #timer-num { font-weight:700; min-width:48px; text-align:right; }
+    #timer-bar { flex:1; height:8px; background: rgba(255,255,255,0.08); border-radius:6px; overflow:hidden; margin-left:10px; }
+    #timer-bar > i { display:block; height:100%; background: linear-gradient(90deg, rgba(245,158,11,0.9), rgba(16,185,129,0.9)); width:100%; transition: width 0.25s linear; }
+
+    /* top-right sound toggle */
+    #sound-toggle { position:absolute; right:18px; top:18px; background:transparent; border-radius:8px; padding:6px; border:1px solid rgba(255,255,255,0.06); cursor:pointer; color:var(--t); }
+
+    /* Make score larger/clear */
+    #score-ui { color: var(--acc); font-weight:800; font-size:1.05rem; }
+  </style>
+</head>
+<body class="theme-dark">
+  <div id="app-card">
+    <button id="sound-toggle" title="Toggle sound" aria-pressed="true">🔊</button>
+
+    <div id="scr-welcome" class="screen active">
+      <h1 style="color:var(--acc); margin:0;">LOGIC VAULT</h1>
+
+      <div style="display:flex; gap:10px; justify-content:center; margin:10px 0;">
+        <button aria-label="Dark theme" title="Dark" onclick="setTheme('dark')" style="background:#0f172a; width:30px; height:30px; border-radius:50%; border:1px solid white;"></button>
+        <button aria-label="Ocean theme" title="Ocean" onclick="setTheme('ocean')" style="background:#0c4a6e; width:30px; height:30px; border-radius:50%; border:1px solid white;"></button>
+        <button aria-label="Light theme" title="Light" onclick="setTheme('light')" style="background:#ffffff; width:30px; height:30px; border-radius:50%; border:1px solid #0f172a;"></button>
+      </div>
+
+      <label class="small" for="lang-sel" style="text-align:left;">Choose language</label>
+      <select id="lang-sel" style="margin-bottom:6px;">
+        <option value="hinglish">Hinglish</option>
+        <option value="marathi">Marathi</option>
+      </select>
+
+      <input id="u-name" type="text" placeholder="Your Name" aria-label="Your name" />
+      <div style="display:flex; gap:10px; margin-top:8px;">
+        <button id="enter-btn" class="btn btn-acc" style="flex:1;">ENTER VAULT</button>
+        <button class="btn" onclick="showHelp()" title="How to play">?</button>
+      </div>
+
+      <footer class="small">Solve riddles. 3 lives. Correct: +2 IQ. Wrong: -2 IQ & lose a life. Timer per question included.</footer>
+    </div>
+
+    <div id="scr-game" class="screen" aria-live="polite">
+      <div class="row-between" style="font-weight:700;">
+        <div id="lives-ui" style="color:var(--rd)">❤️❤️❤️</div>
+        <div id="score-ui">IQ: 0</div>
+      </div>
+
+      <div id="meta" class="small" style="opacity:0.9;">Player: <span id="player-name">Player</span> • <span id="q-index">0 / 50</span></div>
+
+      <div id="q-txt" style="font-size:1.15rem; min-height:72px; font-weight:600; display:flex; align-items:center;"></div>
+
+      <div id="timer-wrap">
+        <div id="timer-num">--s</div>
+        <div id="timer-bar"><i style="width:100%"></i></div>
+      </div>
+
+      <div id="opt-box" role="listbox" aria-label="Answer options"></div>
+
+      <div id="exp-box" role="status"></div>
+
+      <button id="n-btn" class="btn btn-acc" style="display:none; width:100%;" onclick="next()">CONTINUE →</button>
+    </div>
+
+    <div id="scr-result" class="screen">
+      <h2 style="margin:0;">Vault Complete</h2>
+      <div id="final-msg" style="font-weight:700; margin-top:12px;"></div>
+      <div style="display:flex; gap:10px; margin-top:12px;">
+        <button class="btn btn-acc" onclick="restart()" style="flex:1;">Play Again</button>
+        <button class="btn" onclick="show('scr-welcome')" style="flex:1;">Back</button>
+      </div>
+      <footer class="small" style="margin-top:10px;">Your progress is stored locally in this browser.</footer>
+    </div>
+  </div>
+
+  <script>
+    /* ---------- Rich Riddles Data (varied) ---------- */
+    const riddles = {
+      hinglish: [
+        { q: "Wo kya hai jo aati hai par kabhi pahunchti nahi?", o: ["Train", "Tomorrow (Kal)", "Chitthi", "Khushi"], a: 1, e: "Logic: 'Kal' hamesha aane wala hota hai; jab wo aata hai toh wo 'Aaj' ban jata hai." },
+        { q: "Wo kya hai jise todne ke baad hi use kar sakte hain?", o: ["Promise", "Egg", "Glass", "Heart"], a: 1, e: "Logic: Ande ko bina tode uske andar ka hissa khaya nahi ja sakta." },
+        { q: "Kaunsa kamra kabhi bhara nahi hota?", o: ["Living room", "Mushroom", "Bathroom", "Ballroom"], a: 1, e: "Logic: 'Mushroom' me 'room' shabd hai lekin vo khali (fungus) hota hai." },
+        { q: "Ek cheez chalta hai bina pair ke; wo kya hai?", o: ["Water", "Car", "Clock", "Time"], a: 3, e: "Logic: Time 'chalta' rehta hai lekin uspe pair nahi hote." },
+        { q: "Jab aap ise rakhte ho to tod dete ho; jab aap todte ho to aap ise use karte ho. Kya hai?", o: ["Egg", "Secret", "Glass", "Promise"], a: 0, e: "Logic: Ande ko use karne ke liye todna padta hai." },
+        { q: "Wo kaunsi cheez hai jo har kisi ke paas hoti hai lekin use aap dikha nahi sakte?", o: ["Secret", "Name", "Shadow", "Memory"], a: 0, e: "Logic: Secret tab tak chhupa rehta hai jab tak aap use batate nahi." },
+        { q: "Kaunsi cheez aapka saath chhodkar kabhi nahi jaati?", o: ["Memory", "Name", "Shadow", "Breath"], a: 1, e: "Logic: Naam aapke saath rehta hai (interpretational riddle)." },
+        { q: "Kaunsi cheez bar-bar toot kar bhi khatam nahi hoti?", o: ["Wave", "Promise", "Glass", "Egg"], a: 0, e: "Logic: Lahar (wave) toot-ti rehti hai, phir bhi repeat hoti hai." },
+        { q: "Kya cheez zameen pe jalti hai par khoon nahi nikalta?", o: ["Candle", "Sun", "Fire", "Iron"], a: 2, e: "Logic: Aag jalti hai, lekin khoon nahi nikalta." },
+        { q: "Bina chhapke kaun si cheez aap sab jagah dekhte ho lekin use chhoo nahi sakte?", o: ["Light", "Sound", "Air", "Smell"], a: 0, e: "Logic: Light ko hum dekhte hain par direct chhoo nahi sakte." },
+        // ... add more unique riddles as desired
+      ],
+      marathi: [
+        { q: "अशी कोणती गोष्ट आहे जी येते पण कधीच पोहोचत नाही?", o: ["रेल्वे", "उद्या (Tomorrow)", "पत्र", "आनंद"], a: 1, e: "तर्क: 'उद्या' कधीच स्थायी नाही; जेव्हा तो येतो तेव्हा तो 'आज' बनतो." },
+        { q: "तो कोणता वस्तू आहे जो तुटल्यानंतरच वापरता येतो?", o: ["वचन", "अंडं", "सपाट", "हृदय"], a: 1, e: "अंडं तुटल्याशिवाय आतला भाग वापरता येत नाही." }
+      ]
+    };
+
+    // Pad to 50 entries (cloning varied ones)
+    ['hinglish','marathi'].forEach(l => {
+      const base = riddles[l].slice();
+      let i = 0;
+      while (riddles[l].length < 50) {
+        const src = base[i % base.length];
+        const clone = { q: src.q, o: src.o.slice(), a: src.a, e: src.e };
+        riddles[l].push(clone);
+        i++;
+      }
+    });
+
+    /* ---------- Config & State ---------- */
+    let idx = 0, score = 0, lives = 3, lang = "hinglish", currentOrder = [], playerName = "";
+    const TOTAL = 50;
+    const persistKey = "logic-vault-state-v1";
+
+    /* ---------- Timer ---------- */
+    const QUESTION_TIME = 20;
+    let timeLeft = QUESTION_TIME;
+    let timerInterval = null;
+    function startTimer() { clearTimer(); timeLeft = QUESTION_TIME; updateTimerUI(); timerInterval = setInterval(()=>{ timeLeft--; updateTimerUI(); if(timeLeft<=0){ clearTimer(); timeUp(); } },1000); }
+    function clearTimer(){ if(timerInterval){ clearInterval(timerInterval); timerInterval=null; } }
+    function updateTimerUI(){ const num=document.getElementById('timer-num'); const bar=document.querySelector('#timer-bar > i'); num.innerText = (timeLeft>=0?timeLeft:0) + "s"; const pct = Math.max(0,(timeLeft/QUESTION_TIME)*100); bar.style.width = pct + '%'; }
+    function timeUp(){
+      const box = document.getElementById('opt-box');
+      const btns = Array.from(box.querySelectorAll('.opt'));
+      btns.forEach(b=>b.disabled=true);
+      const correctIndex = Number(box.dataset.correct);
+      if(correctIndex>=0 && correctIndex<btns.length) btns[correctIndex].classList.add('correct');
+      const question = riddles[lang][ currentOrder[idx] ];
+      const expBox = document.getElementById('exp-box');
+      expBox.innerText = question.e || 'Time is up.';
+      expBox.style.display = 'block';
+
+      // Wrong -> deduct IQ and a life
+      score -= 2;
+      lives = Math.max(0, lives - 1);
+      updateScoreUI();
+      playWrong();
+      document.getElementById('n-btn').style.display = 'block';
+    }
+
+    /* ---------- Water-like Audio (WebAudio) ----------
+       Background: filtered noise + slow movement to emulate river/stream.
+       SFX: short water-drop/noise bursts for correct/wrong/click.
+    */
+    let audioCtx = null;
+    let masterGain = null;
+    let waterNodes = []; // sources & nodes for the looping water
+    let soundOn = true;
+    let audioInitialized = false;
+
+    function initAudio(){
+      if (audioInitialized) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.22; // overall level
+        masterGain.connect(audioCtx.destination);
+        audioInitialized = true;
+      } catch (e) {
+        console.warn("AudioContext unavailable:", e);
+        audioInitialized = false;
+      }
+    }
+
+    function createNoiseBuffer(durationSec = 2){
+      const sr = audioCtx.sampleRate;
+      const len = Math.floor(durationSec * sr);
+      const buf = audioCtx.createBuffer(1, len, sr);
+      const data = buf.getChannelData(0);
+      for (let i = 0; i < len; i++) {
+        // pink-ish noise can be approximated; simple white noise is fine
+        data[i] = (Math.random() * 2 - 1) * 0.6;
+      }
+      return buf;
+    }
+
+    function startWaterMusic(){
+      if (!audioInitialized || !soundOn) return;
+      stopWaterMusic();
+
+      const now = audioCtx.currentTime;
+
+      // Looping noise source
+      const noiseBuf = createNoiseBuffer(2.0);
+      const src = audioCtx.createBufferSource();
+      src.buffer = noiseBuf;
+      src.loop = true;
+
+      // Filter to shape noise like water (bandpass + lowpass)
+      const bp = audioCtx.createBiquadFilter();
+      bp.type = "bandpass";
+      bp.frequency.value = 800; // center
+      bp.Q.value = 0.8;
+
+      const lp = audioCtx.createBiquadFilter();
+      lp.type = "lowpass";
+      lp.frequency.value = 3500;
+
+      // gentle amplitude control
+      const g = audioCtx.createGain();
+      g.gain.value = 0.9;
+
+      // stereo movement
+      const panner = audioCtx.createStereoPanner();
+      panner.pan.value = 0;
+
+      // LFO to modulate pan and filter frequency for movement
+      const lfo1 = audioCtx.createOscillator();
+      lfo1.type = "sine";
+      lfo1.frequency.value = 0.07; // slow
+      const lfo1Gain = audioCtx.createGain();
+      lfo1Gain.gain.value = 0.7;
+      lfo1.connect(lfo1Gain);
+      lfo1Gain.connect(panner.pan);
+
+      const lfo2 = audioCtx.createOscillator();
+      lfo2.type = "sine";
+      lfo2.frequency.value = 0.06;
+      const lfo2Gain = audioCtx.createGain();
+      lfo2Gain.gain.value = 200;
+      lfo2.connect(lfo2Gain);
+      lfo2Gain.connect(bp.frequency);
+
+      // connect graph: src -> bp -> lp -> gain -> panner -> masterGain
+      src.connect(bp);
+      bp.connect(lp);
+      lp.connect(g);
+      g.connect(panner);
+      panner.connect(masterGain);
+
+      // warm fade-in
+      g.gain.setValueAtTime(0.001, now);
+      g.gain.exponentialRampToValueAtTime(0.9, now + 2.0);
+
+      // start nodes
+      src.start(now);
+      lfo1.start(now);
+      lfo2.start(now);
+
+      // keep references to stop later
+      waterNodes = [{src, bp, lp, g, panner, lfo1, lfo1Gain, lfo2, lfo2Gain}];
+    }
+
+    function stopWaterMusic(){
+      if (!audioInitialized) return;
+      waterNodes.forEach(node => {
+        try {
+          const t = audioCtx.currentTime;
+          if (node.g && node.g.gain) {
+            node.g.gain.cancelScheduledValues(t);
+            node.g.gain.exponentialRampToValueAtTime(0.0001, t + 0.8);
+          }
+          if (node.src && node.src.stop) node.src.stop(audioCtx.currentTime + 0.9);
+          if (node.lfo1 && node.lfo1.stop) node.lfo1.stop(audioCtx.currentTime + 0.9);
+          if (node.lfo2 && node.lfo2.stop) node.lfo2.stop(audioCtx.currentTime + 0.9);
+        } catch(e){}
+      });
+      waterNodes = [];
+    }
+
+    // Small helper to play a water-drop style sound (noise burst + pitch)
+    function playWaterDrop({pitch = 900, length = 0.22, volume = 0.9, noiseLevel = 0.6, pan = 0} = {}) {
+      if (!audioInitialized || !soundOn) return;
+      const now = audioCtx.currentTime;
+      // tone
+      const osc = audioCtx.createOscillator();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(pitch, now);
+
+      const toneGain = audioCtx.createGain();
+      toneGain.gain.setValueAtTime(0.0001, now);
+      toneGain.gain.exponentialRampToValueAtTime(volume * 0.6, now + 0.01);
+      toneGain.gain.exponentialRampToValueAtTime(0.0001, now + length);
+
+      // noise burst
+      const noiseBuf = createNoiseBuffer(0.12);
+      const ns = audioCtx.createBufferSource();
+      ns.buffer = noiseBuf;
+
+      const nFilter = audioCtx.createBiquadFilter();
+      nFilter.type = 'lowpass';
+      nFilter.frequency.value = 1800;
+
+      const nGain = audioCtx.createGain();
+      nGain.gain.setValueAtTime(noiseLevel * 0.9, now);
+      nGain.gain.exponentialRampToValueAtTime(0.0001, now + length);
+
+      // panner
+      const p = audioCtx.createStereoPanner();
+      p.pan.value = pan;
+
+      // connect
+      osc.connect(toneGain);
+      toneGain.connect(p);
+      ns.connect(nFilter);
+      nFilter.connect(nGain);
+      nGain.connect(p);
+      p.connect(masterGain);
+
+      osc.start(now);
+      osc.stop(now + length + 0.02);
+      ns.start(now);
+      ns.stop(now + 0.13);
+    }
+
+    function playClick(){ playWaterDrop({pitch:1200, length:0.08, volume:0.5, noiseLevel:0.15, pan: -0.2}); }
+    function playCorrect(){ playWaterDrop({pitch:1200, length:0.18, volume:0.7, noiseLevel:0.2, pan: 0.2}); playWaterDrop({pitch:1500, length:0.12, volume:0.5, noiseLevel:0.14, pan: 0.5}); }
+    function playWrong(){ playWaterDrop({pitch:360, length:0.22, volume:0.7, noiseLevel:0.5, pan: -0.2}); playWaterDrop({pitch:240, length:0.18, volume:0.5, noiseLevel:0.45, pan: -0.6}); }
+
+    /* ---------- Sound toggle & prefs ---------- */
+    const soundToggleBtn = document.getElementById('sound-toggle');
+    function loadSoundPref(){ try{ const v = localStorage.getItem(persistKey + '-sound'); if (v !== null) soundOn = (v === '1'); } catch(e){} updateSoundUI(); }
+    function saveSoundPref(){ try{ localStorage.setItem(persistKey + '-sound', soundOn ? '1' : '0'); } catch(e){} }
+    function toggleSound(userGesture=false){
+      soundOn = !soundOn;
+      updateSoundUI();
+      saveSoundPref();
+      if (soundOn && userGesture) {
+        initAudio();
+        if (audioInitialized) startWaterMusic();
+      } else {
+        stopWaterMusic();
+      }
+    }
+    function updateSoundUI(){
+      soundToggleBtn.innerText = soundOn ? '🔊' : '🔈';
+      soundToggleBtn.setAttribute('aria-pressed', soundOn ? 'true' : 'false');
+      if (audioInitialized && soundOn) startWaterMusic();
+      else if (audioInitialized) stopWaterMusic();
+    }
+    soundToggleBtn.addEventListener('click', (e) => {
+      initAudio();
+      // ensure user gesture to satisfy autoplay
+      if (audioInitialized && audioCtx.state === 'suspended') audioCtx.resume().catch(()=>{});
+      toggleSound(true);
+      playClick();
+    });
+
+    /* ---------- Utilities & Persistence ---------- */
+    function setTheme(t){ if(t === 'dark') document.body.className='theme-dark'; else if(t === 'ocean') document.body.className='theme-ocean'; else if(t === 'light') document.body.className='theme-light'; }
+    function show(id){ document.querySelectorAll('.screen').forEach(s => s.classList.remove('active')); document.getElementById(id).classList.add('active'); }
+    function showHelp(){ alert("Answer riddles. Correct +2 IQ. Wrong -2 IQ and lose a life. Timer per question. Toggle water sound top-right."); }
+    function savePrefs(){ const data = { name: playerName, lang }; try { localStorage.setItem(persistKey, JSON.stringify(data)); } catch(e){} }
+    function loadPrefs(){ try { const raw = localStorage.getItem(persistKey); if (!raw) return; const obj = JSON.parse(raw); if (obj.name) document.getElementById('u-name').value = obj.name; if (obj.lang) document.getElementById('lang-sel').value = obj.lang; } catch(e){} }
+    loadPrefs();
+    loadSoundPref();
+
+    /* ---------- Game flow (score changes: correct +2, wrong -2) ---------- */
+    function start(){
+      initAudio();
+      lang = document.getElementById('lang-sel').value || 'hinglish';
+      playerName = (document.getElementById('u-name').value || 'Player').trim();
+      document.getElementById('player-name').innerText = playerName || 'Player';
+      savePrefs();
+
+      idx = 0; score = 0; lives = 3;
+      currentOrder = Array.from({length: TOTAL}, (_, i) => i);
+      shuffleArray(currentOrder);
+
+      updateScoreUI();
+      load();
+
+      if (soundOn && audioInitialized) startWaterMusic();
+      show('scr-game');
+      playClick();
+    }
+
+    function restart(){ start(); playClick(); }
+
+    function updateScoreUI(){
+      document.getElementById('score-ui').innerText = "IQ: " + score;
+      const filled = "❤️".repeat(Math.max(0, lives));
+      const empty = "🖤".repeat(Math.max(0, 3 - lives));
+      document.getElementById('lives-ui').innerText = filled + empty;
+      document.getElementById('q-index').innerText = (idx + 1) + " / " + TOTAL;
+    }
+
+    function load(){
+      clearTimer();
+      const question = riddles[lang][ currentOrder[idx] ];
+      document.getElementById('q-txt').innerText = question.q;
+
+      const box = document.getElementById('opt-box');
+      box.innerHTML = "";
+
+      const opts = question.o.map((text, i) => ({text, originalIndex: i}));
+      shuffleArray(opts);
+
+      const correctIndex = opts.findIndex(o => o.originalIndex === question.a);
+      box.dataset.correct = correctIndex;
+
+      opts.forEach((opt, i) => {
+        const b = document.createElement('button');
+        b.className = "opt";
+        b.setAttribute('role','option');
+        b.innerText = opt.text;
+        b.tabIndex = 0;
+        b.onclick = () => { playClick(); check(i); };
+        b.onkeydown = (ev) => {
+          if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); playClick(); check(i); }
+        };
+        box.appendChild(b);
+      });
+
+      const expBox = document.getElementById('exp-box');
+      expBox.style.display = 'none';
+      expBox.innerText = '';
+
+      document.getElementById('n-btn').style.display = 'none';
+      updateScoreUI();
+
+      startTimer();
+    }
+
+    function check(i){
+      clearTimer();
+      const box = document.getElementById('opt-box');
+      const btns = Array.from(box.querySelectorAll('.opt'));
+      btns.forEach(b => b.disabled = true);
+
+      const correctIndex = Number(box.dataset.correct);
+      const question = riddles[lang][ currentOrder[idx] ];
+      const expBox = document.getElementById('exp-box');
+      expBox.innerText = question.e || '';
+      expBox.style.display = 'block';
+
+      if (i === correctIndex) {
+        btns[i].classList.add('correct');
+        score += 2;            // correct: +2 IQ
+        playCorrect();
+      } else {
+        if (i >= 0 && i < btns.length) btns[i].classList.add('wrong');
+        if (correctIndex >= 0 && correctIndex < btns.length) btns[correctIndex].classList.add('correct');
+        score -= 2;            // wrong: -2 IQ
+        lives = Math.max(0, lives - 1);
+        playWrong();
+      }
+
+      updateScoreUI();
+      document.getElementById('n-btn').style.display = 'block';
+    }
+
+    function next(){
+      idx++;
+      if (lives <= 0) {
+        showResult("Game Over — you ran out of lives.");
+        return;
+      }
+      if (idx >= TOTAL) {
+        showResult("Congrats! You completed the vault.");
+        return;
+      }
+      load();
+    }
+
+    function showResult(message){
+      document.getElementById('final-msg').innerHTML = `${message} <br/> <strong>${playerName}</strong>, your IQ: <strong>${score}</strong>`;
+      show('scr-result');
+      // stop water when done
+      stopWaterMusic();
+    }
+
+    /* ---------- Helpers ---------- */
+    function shuffleArray(arr){ for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
+
+    /* ---------- Wiring ---------- */
+    const enterBtn = document.getElementById('enter-btn');
+    enterBtn.addEventListener('click', (e) => {
+      initAudio();
+      if (audioInitialized && audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume().then(()=>{ if (soundOn) startWaterMusic(); }).catch(()=>{});
+      } else { if (soundOn) startWaterMusic(); }
+      start();
+    });
+
+    document.getElementById('u-name').addEventListener('keydown', (e) => { if (e.key === 'Enter') enterBtn.click(); });
+
+    // startup load preferences
+    (function startup(){ loadPrefs(); loadSoundPref(); updateSoundUI(); })();
+  </script>
+</body>
+</html>
