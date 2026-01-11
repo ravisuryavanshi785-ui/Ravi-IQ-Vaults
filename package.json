@@ -1,0 +1,39 @@
+{
+  "name": "ravi-iq-vault",
+  "version": "1.0.1",
+  "description": "Ravi's Logic Vault Infinity Edition",
+  "main": "www/index.html",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/<your-username>/ravi-iq-vault.git"
+  },
+  "author": "Ravi Suryavanshi <you@example.com>",
+  "license": "MIT",
+  "homepage": "https://your-site-or-github-page",
+  "keywords": [
+    "capacitor",
+    "mobile",
+    "vault",
+    "ravi"
+  ],
+  "engines": {
+    "node": ">=16"
+  },
+  "scripts": {
+    "build:web": "echo \"Add your web build command here (e.g. ionic build or npm run build)\"",
+    "cap:sync": "npx cap sync",
+    "cap:add:android": "npx cap add android",
+    "cap:add:ios": "npx cap add ios",
+    "cap:open:android": "npx cap open android",
+    "cap:open:ios": "npx cap open ios",
+    "cap:update": "npx cap update",
+    "prepare": "npm run build:web && npx cap sync"
+  },
+  "dependencies": {
+    "@capacitor/core": "^5.9.3",
+    "@capacitor/android": "^5.9.3"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^5.9.3"
+  }
+}
